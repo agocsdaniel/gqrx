@@ -22,12 +22,16 @@ public slots:
     void showDisabled();
     void setEnabled();
     void setDisabled();
+    void setState(bool state);
 
 private:
     void ClearTextFields();
+    bool disabled;
 
 signals:
     void rdsDecoderToggled(bool);
+    void stationChanged(QString);
+    void radiotextChanged(QString);
 
 private slots:
     void on_rdsCheckbox_toggled(bool checked);
