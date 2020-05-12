@@ -49,6 +49,8 @@ RemoteControl::RemoteControl(QObject *parent) :
     audio_recorder_status = false;
     receiver_running = false;
     hamlib_compatible = false;
+    rds_station = QString("");
+    rds_radiotext = QString("");
 
     rc_port = DEFAULT_RC_PORT;
     rc_allowed_hosts.append(DEFAULT_RC_ALLOWED_HOSTS);
@@ -246,6 +248,12 @@ void RemoteControl::startRead()
         answer = cmd_lnb_lo(cmdlist);
     else if (cmd == "\\dump_state")
         answer = cmd_dump_state();
+    else if (cmd == "RDS")
+        answer = cmd_set_rds(cmdlist);
+    else if (cmd == "RDS_STATION")
+        answer = cmd_rds_station();
+    else if (cmd == "RDS_RT")
+        answer = cmd_rds_radiotext();
     else if (cmd == "q" || cmd == "Q")
     {
         // FIXME: for now we assume 'close' command
@@ -397,6 +405,18 @@ bool RemoteControl::setGain(QString name, double gain)
 void RemoteControl::rdsPI(QString program_id)
 {
     rc_program_id = program_id;
+}
+
+/*! \brief Set RDS Station name. */
+void RemoteControl::setRdsStation(QString name)
+{
+    rds_station = name;
+}
+
+/*! \brief Set RDS Radiotext. */
+void RemoteControl::setRdsRadiotext(QString text)
+{
+    rds_radiotext = text;
 }
 
 /*! \brief Set RDS status (from RDS dock). */
@@ -825,7 +845,7 @@ QString RemoteControl::cmd_set_split_vfo()
 /* Get info */
 QString RemoteControl::cmd_get_info() const
 {
-    return QString("Gqrx %1\n").arg(VERSION);
+    return QString("Gqrx %1 rdsapi\n").arg(VERSION);
 };
 
 /* Gpredict / Gqrx specific command: AOS - satellite AOS event */
@@ -868,6 +888,50 @@ QString RemoteControl::cmd_lnb_lo(QStringList cmdlist)
     {
         return QString("%1\n").arg((qint64)(rc_lnb_lo_mhz * 1e6));
     }
+}
+
+/* Set RDS enabled */
+QString RemoteControl::cmd_set_rds(QStringList cmdlist)
+{
+    if(cmdlist.size() == 2 || (rc_mode != 4 && rc_mode != 5))
+    {
+        bool ok;
+        qint64 state = cmdlist[1].toLongLong(&ok);
+
+        if (ok)
+        {
+            if(state == 1)
+            {
+                emit rdsStateChanged(true);
+                return QString("RPRT 0\n");
+            }
+            else if(state == 0)
+            {
+                emit rdsStateChanged(false);
+                return QString("RPRT 0\n");
+            }
+            else return QString("RPRT 1\n");
+        }
+
+        return QString("RPRT 1\n");
+    }
+    else
+    {
+        return QString("RPRT 1\n"); //TODO get status
+    }
+}
+
+/* Get RDS Station name */
+QString RemoteControl::cmd_rds_station()
+{
+    return QString("%1\n").arg(rds_station);
+    
+}
+
+/* Get RDS Radiotext */
+QString RemoteControl::cmd_rds_radiotext()
+{
+    return QString("%1\n").arg(rds_radiotext);
 }
 
 /*

@@ -27,6 +27,7 @@
 
 DockRDS::DockRDS(QWidget *parent) :
     QDockWidget(parent),
+    disabled(false),
     ui(new Ui::DockRDS)
 {
     ui->setupUi(this);
@@ -58,6 +59,7 @@ void DockRDS::updateRDS(QString text, int type)
         ui->program_information->setText(text);
         break;
     case 1:
+        emit stationChanged(text);
         ui->station_name->setText(text);
         break;
     case 2:
@@ -78,6 +80,7 @@ void DockRDS::updateRDS(QString text, int type)
         ui->flags->setText(QString::fromStdString(out));
         break;
     case 4:
+        emit radiotextChanged(text);
         ui->radiotext->setText(text);
         break;
     case 5:
@@ -119,8 +122,14 @@ void DockRDS::showDisabled()
     ClearTextFields();
 }
 
+void DockRDS::setState(bool state)
+{
+    if(!disabled) ui->rdsCheckbox->setChecked(state);
+}
+
 void DockRDS::setDisabled()
 {
+    disabled = true;
     ui->rdsCheckbox->setDisabled(true);
     ui->rdsCheckbox->blockSignals(true);
     ui->rdsCheckbox->setChecked(false);
@@ -129,6 +138,7 @@ void DockRDS::setDisabled()
 
 void DockRDS::setEnabled()
 {
+    disabled = false;
     ui->rdsCheckbox->setDisabled(false);
 }
 
